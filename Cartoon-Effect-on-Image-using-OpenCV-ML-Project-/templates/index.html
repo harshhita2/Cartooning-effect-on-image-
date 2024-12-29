@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cartoonify Image</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        input, button, label {
+            margin: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+        }
+        #file-input{
+            align-items: center;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Cartoonify Your Image</h1>
+    <form id="upload-form">
+        <label for="file-input">Choose an image:</label>
+        <input type="file" id="file-input" name="file" accept="image/*" required>
+        
+        <label for="line-size">Line Size (Edge Detection):</label>
+        <input type="number" id="line-size" name="line_size" value="7" min="1" max="20">
+        
+        <label for="blur-value">Blur Value:</label>
+        <input type="number" id="blur-value" name="blur_value" value="7" min="1" max="20">
+        
+        <label for="k-value">Number of Colors (k):</label>
+        <input type="number" id="k-value" name="k" value="9" min="1" max="20">
+        
+        <button type="submit">Upload and Process</button>
+    </form>
+    <div id="output">
+        <h2>Original Image</h2>
+        <img id="original" src="#" alt="Original Image" style="display: none;">
+        
+        <h2>Cartoonified Image</h2>
+        <img id="cartoon" src="#" alt="Cartoonified Image" style="display: none;">
+    </div>
+    <script>
+        const form = document.getElementById('upload-form');
+        const originalImg = document.getElementById('original');
+        const cartoonImg = document.getElementById('cartoon');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fileInput = document.getElementById('file-input');
+            const file = fileInput.files[0];
+            const lineSize = document.getElementById('line-size').value;
+            const blurValue = document.getElementById('blur-value').value;
+            const kValue = document.getElementById('k-value').value;
+
+            if (!file) {
+                alert('Please upload an image!');
+                return;
+            }
+
+            // Display the original image
+            const reader = new FileReader();
+            reader.onload = () => {
+                originalImg.src = reader.result;
+                originalImg.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+
+            // Send the file and parameters to the back-end
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('line_size', lineSize);
+            formData.append('blur_value', blurValue);
+            formData.append('k', kValue);
+
+            try {
+                const response = await fetch('/process', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const cartoonURL = URL.createObjectURL(blob);
+                    cartoonImg.src = cartoonURL;
+                    cartoonImg.style.display = 'block';
+                } else {
+                    alert('Failed to process the image!');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while processing the image!');
+            }
+        });
+    </script>
+</body>
+</html>
